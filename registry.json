@@ -1,0 +1,37 @@
+[
+  {
+    "id": "api-server",
+    "title": "API Server",
+    "description": "API server with Bearer authentication.",
+    "version": "1.0.0",
+    "author": "WebStray"
+  },
+  {
+    "id": "password-generator",
+    "title": "Password Generator",
+    "description": "Secure entropy-based password generator.",
+    "version": "1.0.0",
+    "author": "WebStray"
+  },
+  {
+    "id": "search-plugin",
+    "title": "Search Plugin",
+    "description": "Powerful search for passwords, 2FA codes and tokens.",
+    "version": "1.0.0",
+    "author": "WebStray"
+  },
+  {
+    "id": "security-audit",
+    "title": "Security Audit",
+    "description": "Security audit for your passwords.",
+    "version": "1.0.0",
+    "author": "WebStray"
+  },
+  {
+    "id": "ui-kitchen",
+    "title": "UI Kitchen",
+    "description": "Interactive playground for all available SDK components.",
+    "version": "1.0.0",
+    "author": "WebStray"
+  }
+]

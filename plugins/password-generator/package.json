@@ -1,0 +1,7 @@
+{
+  "id": "password-generator",
+  "title": "Password Generator",
+  "description": "Secure entropy-based password generator.",
+  "version": "1.0.0",
+  "author": "WebStray"
+}

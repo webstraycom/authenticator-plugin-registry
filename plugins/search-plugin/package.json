@@ -1,0 +1,7 @@
+{
+  "id": "search-plugin",
+  "title": "Search Plugin",
+  "description": "Powerful search for passwords, 2FA codes and tokens.",
+  "version": "1.0.0",
+  "author": "WebStray"
+}

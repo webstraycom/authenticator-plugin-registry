@@ -1,0 +1,13 @@
+{
+  "name": "authenticator-plugin-registry",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "registry:generate": "node scripts/generate.js && npm run format",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2"
+  }
+}
