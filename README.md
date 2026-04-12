@@ -1,4 +1,4 @@
-![Plugin r Preview](.github/assets/og.png)
+![Plugin Registry Preview](.github/assets/og.png)
 
 # Plugin Registry
 
