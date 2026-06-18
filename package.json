@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "registry:generate": "node scripts/generate.js && npm run format",
+    "registry:build": "node scripts/build.js && npm run format",
     "format": "prettier --write ."
   },
   "dependencies": {
