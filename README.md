@@ -16,9 +16,9 @@ The following tree outlines the repository structure:
 .
 ├── plugins/              # Plugin source code
 ├── templates/            # Plugin boilerplates/templates
-├── scripts/              # Registry generation scripts
-├── package.json          # Build scripts and dependencies
-└── registry.json         # Auto-generated plugin registry
+├── scripts/              # Registry build scripts
+├── package.json          # Project configuration
+└── registry.json         # Auto-generated plugin registry file
 ```
 
 ## Documentation
@@ -79,7 +79,7 @@ To create a new plugin, follow these steps:
 2.  In the plugin management dialog, click the link to open the application's plugins directory.
 3.  Inside the plugins directory, create a directory named `<your-plugin-name>`.
 4.  Inside the `<your-plugin-name>` directory, create two files:
-    - `package.json`: must include a unique `"name"` field.
+    - `package.json`: must include a unique `"id"` field.
     - `index.js`: must provide a `default export` function that accepts the `sdk` object.
 5.  Return to the plugin management dialog, find your plugin in the list, and enable it.
 6.  Verify: If you implemented a menu action or a UI sheet, it will now be available in the application.
@@ -103,7 +103,7 @@ npm install
 
 ### Sync the registry
 
-Use these commands to generate the registry file and format the code:
+Use these commands to update the registry file and format the code:
 
 ```bash
 # To update the registry file after adding new files:
