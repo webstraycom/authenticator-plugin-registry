@@ -2,6 +2,63 @@ export default function init(sdk) {
   const { React, Icons, plugin, ui, components, db, crypto } = sdk;
   const { Button, Progress, Item, Separator, HoverCard } = components;
 
+  const IssueItem = ({ item }) => {
+    return React.createElement(
+      Item.Item,
+      {
+        variant: 'outline',
+        className: 'dark:bg-muted/30 shadow-xs dark:shadow-none rounded-lg',
+        size: 'sm',
+      },
+      React.createElement(
+        Item.ItemMedia,
+        { variant: 'icon', className: 'border-none bg-muted !p-1.5' },
+        React.createElement(Icons.CircleAlertIcon, { className: 'size-4' }),
+      ),
+
+      React.createElement(
+        Item.ItemContent,
+        { className: 'gap-0' },
+        React.createElement(Item.ItemTitle, { className: 'gap-1 text-xs' }, item.site),
+        React.createElement(
+          Item.ItemDescription,
+          { className: 'text-[11px]' },
+          item.reason === 'Too short'
+            ? [
+                React.createElement('span', { key: 't' }, 'Password is short: needs '),
+                React.createElement(
+                  'strong',
+                  { key: 'm', className: 'font-semibold' },
+                  item.missingCount,
+                ),
+                React.createElement(
+                  'span',
+                  { key: 'c' },
+                  ` more ${item.missingCount === 1 ? 'char' : 'chars'}`,
+                ),
+              ]
+            : item.reason === 'Duplicate'
+              ? [
+                  React.createElement('span', { key: 't' }, 'This password reused '),
+                  React.createElement(
+                    'strong',
+                    { key: 'c', className: 'font-semibold' },
+                    item.count,
+                  ),
+                  React.createElement('span', { key: 'ti' }, ' times'),
+                ]
+              : [
+                  React.createElement(
+                    'span',
+                    { key: 't' },
+                    'This password is corrupted and cannot be read.',
+                  ),
+                ],
+        ),
+      ),
+    );
+  };
+
   const Content = () => {
     const [stats, setStats] = React.useState({
       score: 0,
@@ -15,40 +72,36 @@ export default function init(sdk) {
       setAnalyzing(true);
       const passwords = await db.find({ type: 'password' });
 
-      const weak = [];
-      const corrupted = [];
-      const map = new Map();
-
-      passwords.forEach((p) => {
+      const decryptedData = passwords.map((p) => {
         try {
-          const val = crypto.decrypt(p.value);
-          const missingCount = 10 - val.length;
-          if (val.length < 10) {
-            weak.push({
-              ...p,
-              reason: 'Too short',
-              missingCount,
-            });
-          }
-          if (!map.has(val)) map.set(val, []);
-          map.get(val).push(p);
-        } catch (e) {
-          /* corrupted */
-          corrupted.push({
-            ...p,
-            reason: 'Corrupted',
-          });
+          return { ...p, decrypted: crypto.decrypt(p.value) };
+        } catch {
+          return { ...p, reason: 'Corrupted' };
         }
       });
 
-      const reused = [];
-      map.forEach((items) => {
-        if (items.length > 1) {
-          items.forEach((item) =>
-            reused.push({ ...item, reason: 'Duplicate', count: items.length }),
-          );
-        }
-      });
+      const corrupted = decryptedData.filter((p) => p.reason === 'Corrupted');
+      const validPasswords = decryptedData.filter((p) => !p.reason);
+
+      const weak = validPasswords
+        .filter((p) => p.decrypted.length < 10)
+        .map(({ decrypted, ...p }) => ({
+          ...p,
+          reason: 'Too short',
+          missingCount: 10 - decrypted.length,
+        }));
+
+      const groupedByPassword = Object.groupBy(validPasswords, (p) => p.decrypted);
+
+      const reused = Object.values(groupedByPassword)
+        .filter((items) => items.length > 1)
+        .flatMap((items) =>
+          items.map(({ decrypted, ...item }) => ({
+            ...item,
+            reason: 'Duplicate',
+            count: items.length,
+          })),
+        );
 
       const total = passwords.length || 1;
       const badCount = new Set([...weak, ...reused, ...corrupted].map((p) => p._id)).size;
@@ -63,63 +116,6 @@ export default function init(sdk) {
     React.useEffect(() => {
       analyze();
     }, []);
-
-    const renderIssue = (item) =>
-      React.createElement(
-        Item.Item,
-        {
-          key: item._id,
-          variant: 'outline',
-          className: 'dark:bg-muted/30 shadow-xs dark:shadow-none rounded-lg',
-          size: 'sm',
-        },
-        React.createElement(
-          Item.ItemMedia,
-          { variant: 'icon', className: 'border-none bg-muted !p-1.5' },
-          React.createElement(Icons.CircleAlertIcon, { className: 'size-4' }),
-        ),
-
-        React.createElement(
-          Item.ItemContent,
-          { className: 'gap-0' },
-          React.createElement(Item.ItemTitle, { className: 'gap-1 text-xs' }, item.site),
-          React.createElement(
-            Item.ItemDescription,
-            { className: 'text-[11px]' },
-            item.reason === 'Too short'
-              ? [
-                  React.createElement('span', { key: 't' }, 'Password is short: needs '),
-                  React.createElement(
-                    'strong',
-                    { key: 'm', className: 'font-semibold' },
-                    item.missingCount,
-                  ),
-                  React.createElement(
-                    'span',
-                    { key: 'c' },
-                    ` more ${item.missingCount === 1 ? 'char' : 'chars'}`,
-                  ),
-                ]
-              : item.reason === 'Duplicate'
-                ? [
-                    React.createElement('span', { key: 't' }, 'This password reused '),
-                    React.createElement(
-                      'strong',
-                      { key: 'c', className: 'font-semibold' },
-                      item.count,
-                    ),
-                    React.createElement('span', { key: 'ti' }, ' times'),
-                  ]
-                : [
-                    React.createElement(
-                      'span',
-                      { key: 't' },
-                      'This password is corrupted and cannot be read.',
-                    ),
-                  ],
-          ),
-        ),
-      );
 
     return React.createElement(
       'div',
@@ -153,7 +149,7 @@ export default function init(sdk) {
         stats.weak.length > 0 &&
           React.createElement(
             React.Fragment,
-            null,
+            { key: 'weak-section' },
             React.createElement(
               'div',
               {
@@ -168,13 +164,15 @@ export default function init(sdk) {
               ),
               React.createElement(Separator, { className: 'flex-1' }),
             ),
-            stats.weak.map(renderIssue),
+            stats.weak.map((item) =>
+              React.createElement(IssueItem, { key: `${item._id}-weak`, item }),
+            ),
           ),
 
         stats.reused.length > 0 &&
           React.createElement(
             React.Fragment,
-            null,
+            { key: 'reused-section' },
             React.createElement(
               'div',
               {
@@ -189,13 +187,15 @@ export default function init(sdk) {
               ),
               React.createElement(Separator, { className: 'flex-1' }),
             ),
-            stats.reused.map(renderIssue),
+            stats.reused.map((item) =>
+              React.createElement(IssueItem, { key: `${item._id}-reused`, item }),
+            ),
           ),
 
         stats.corrupted.length > 0 &&
           React.createElement(
             React.Fragment,
-            null,
+            { key: 'corrupted-section' },
             React.createElement(
               'div',
               {
@@ -210,7 +210,9 @@ export default function init(sdk) {
               ),
               React.createElement(Separator, { className: 'flex-1' }),
             ),
-            stats.corrupted.map(renderIssue),
+            stats.corrupted.map((item) =>
+              React.createElement(IssueItem, { key: `${item._id}-corrupted`, item }),
+            ),
           ),
 
         !analyzing &&
