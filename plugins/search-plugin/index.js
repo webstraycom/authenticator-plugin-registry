@@ -3,16 +3,127 @@ export default function init(sdk) {
   const { Button, InputGroup, Spinner, Item, Separator } = components;
   const { sorter } = utils;
 
+  const getMeta = (item) => {
+    const config = {
+      password: { icon: Icons.LockIcon, title: item.site, sub: item.login },
+      totp: { icon: Icons.ClockIcon, title: item.service, sub: item.account },
+      token: {
+        icon: Icons.KeyRoundIcon,
+        title: item.service,
+        sub: item.endpoint,
+      },
+    };
+    return config[item.type] || { icon: Icons.File, title: 'Unknown', sub: '' };
+  };
+
+  const CopyButton = ({ res, isCorrupted }) => {
+    const [copied, setCopied] = React.useState(false);
+    const timerRef = React.useRef(null);
+
+    React.useEffect(() => {
+      return () => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+      };
+    }, []);
+
+    const handleCopy = async (e) => {
+      e.stopPropagation();
+      try {
+        let valueToCopy = res.decryptedValue;
+
+        if (res.type === 'totp') {
+          const totpData = sdk.utils.getTOTP(res.decryptedValue, Date.now());
+          valueToCopy = typeof totpData === 'object' ? totpData.token : totpData;
+        }
+
+        await window.navigator.clipboard.writeText(String(valueToCopy));
+
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+        }
+
+        setCopied(true);
+
+        timerRef.current = setTimeout(() => {
+          setCopied(false);
+          timerRef.current = null;
+        }, 3000);
+      } catch (err) {
+        ui.notify('Copy Error', 'error');
+        console.error('TOTP Error:', err);
+      }
+    };
+
+    return React.createElement(
+      Button,
+      {
+        variant: 'outline',
+        size: 'xs',
+        disabled: !!isCorrupted,
+        onClick: handleCopy,
+      },
+      [
+        copied ? React.createElement(Icons.Check, { key: 'icon', className: 'size-3' }) : null,
+        React.createElement('span', { key: 'text' }, copied ? 'Copied' : 'Copy'),
+      ],
+    );
+  };
+
+  const ListItem = ({ res }) => {
+    const meta = getMeta(res);
+    const isCorrupted = !!res.isCorrupted;
+
+    return React.createElement(
+      Item.Item,
+      {
+        variant: 'outline',
+        className: `dark:bg-muted/30 shadow-xs dark:shadow-none rounded-lg gap-2 ${!!isCorrupted && 'opacity-50'}`,
+        size: 'sm',
+      },
+      React.createElement(
+        Item.ItemMedia,
+        { variant: 'icon', className: 'border-none bg-muted !p-1.5' },
+        React.createElement(!isCorrupted ? meta.icon : Icons.CircleAlertIcon, {
+          className: 'size-4',
+        }),
+      ),
+
+      React.createElement(
+        Item.ItemContent,
+        { className: 'gap-0' },
+        !isCorrupted &&
+          React.createElement(Item.ItemTitle, { className: 'gap-1 text-xs' }, meta.title),
+        React.createElement(
+          Item.ItemDescription,
+          { className: `text-[11px] ${isCorrupted && 'pt-1'}` },
+          !isCorrupted
+            ? meta.sub
+            : [
+                'Value for ',
+                React.createElement('strong', { key: `title-${res._id}` }, meta.title),
+                ' is corrupted',
+              ],
+        ),
+      ),
+
+      React.createElement(
+        Item.ItemActions,
+        null,
+        React.createElement(CopyButton, { res, isCorrupted }),
+      ),
+    );
+  };
+
   const Content = () => {
     const [query, setQuery] = React.useState('');
     const [results, setResults] = React.useState({ active: [], corrupted: [] });
     const [searching, setSearching] = React.useState(false);
-    const inputRef = React.useRef(null);
 
     const performSearch = async (text) => {
       setQuery(text);
       if (text.trim().length < 1) {
         setResults({ active: [], corrupted: [] });
+        setSearching(false);
         return;
       }
 
@@ -57,91 +168,6 @@ export default function init(sdk) {
 
     const totalCount = (results.active?.length || 0) + (results.corrupted?.length || 0);
 
-    const getMeta = (item) => {
-      const config = {
-        password: { icon: Icons.LockIcon, title: item.site, sub: item.login },
-        totp: { icon: Icons.ClockIcon, title: item.service, sub: item.account },
-        token: {
-          icon: Icons.KeyRoundIcon,
-          title: item.service,
-          sub: item.endpoint,
-        },
-      };
-      return config[item.type] || { icon: Icons.File, title: 'Unknown', sub: '' };
-    };
-
-    const renderItem = (res) => {
-      const meta = getMeta(res);
-      const isCorrupted = !!res.isCorrupted;
-
-      return React.createElement(
-        Item.Item,
-        {
-          key: res._id,
-          variant: 'outline',
-          className: `dark:bg-muted/30 shadow-xs dark:shadow-none rounded-lg gap-2 ${!!isCorrupted && 'opacity-50'}`,
-          size: 'sm',
-        },
-        React.createElement(
-          Item.ItemMedia,
-          { variant: 'icon', className: 'border-none bg-muted !p-1.5' },
-          React.createElement(!isCorrupted ? meta.icon : Icons.CircleAlertIcon, {
-            className: 'size-4',
-          }),
-        ),
-
-        React.createElement(
-          Item.ItemContent,
-          { className: 'gap-0' },
-          !isCorrupted &&
-            React.createElement(Item.ItemTitle, { className: 'gap-1 text-xs' }, meta.title),
-          React.createElement(
-            Item.ItemDescription,
-            { className: `text-[11px] ${isCorrupted && 'pt-1'}` },
-            !isCorrupted
-              ? meta.sub
-              : [
-                  'Value for ',
-                  React.createElement('strong', { key: `title-${res._id}` }, meta.title),
-                  ' is corrupted',
-                ],
-          ),
-        ),
-
-        React.createElement(
-          Item.ItemActions,
-          null,
-          React.createElement(
-            Button,
-            {
-              variant: 'outline',
-              disabled: !!isCorrupted,
-              className: 'h-7 text-xs p-2',
-              onClick: (e) => {
-                e.stopPropagation();
-                try {
-                  let valueToCopy = res.decryptedValue;
-
-                  if (res.type === 'totp') {
-                    const totpData = sdk.utils.getTOTP(res.decryptedValue, Date.now());
-
-                    valueToCopy = typeof totpData === 'object' ? totpData.token : totpData;
-                  }
-
-                  window.navigator.clipboard.writeText(String(valueToCopy));
-                  ui.notify(`Code for ${meta.title} copied!`);
-                } catch (err) {
-                  ui.notify('Copy Error', 'error');
-                  console.error('TOTP Error:', err);
-                }
-              },
-            },
-            'Copy',
-          ),
-        ),
-      );
-    };
-
     return React.createElement(
       'div',
       { className: 'flex flex-col flex-1 min-h-0 gap-4' },
@@ -157,7 +183,6 @@ export default function init(sdk) {
             : React.createElement(Icons.Search, { className: 'size-4' }),
         ),
         React.createElement(InputGroup.InputGroupInput, {
-          ref: inputRef,
           placeholder: 'Search everywhere...',
           value: query,
           onChange: (e) => performSearch(e.target.value),
@@ -192,7 +217,7 @@ export default function init(sdk) {
           : React.createElement(
               'div',
               { className: 'flex flex-col gap-3' },
-              results.active.map((res) => renderItem(res)),
+              results.active.map((res) => React.createElement(ListItem, { key: res._id, res })),
               results.corrupted.length > 0 &&
                 React.createElement(
                   React.Fragment,
@@ -208,7 +233,9 @@ export default function init(sdk) {
                     ),
                     React.createElement(Separator, { className: 'flex-1' }),
                   ),
-                  results.corrupted.map((res) => renderItem(res)),
+                  results.corrupted.map((res) =>
+                    React.createElement(ListItem, { key: res._id, res }),
+                  ),
                 ),
             ),
       ),
