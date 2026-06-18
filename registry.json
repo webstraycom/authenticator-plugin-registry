@@ -7,6 +7,13 @@
     "author": "WebStray"
   },
   {
+    "id": "global-search",
+    "title": "Global Search",
+    "description": "Powerful search for passwords, 2FA codes and tokens.",
+    "version": "1.1.0",
+    "author": "WebStray"
+  },
+  {
     "id": "password-generator",
     "title": "Password Generator",
     "description": "Secure entropy-based password generator.",
@@ -14,17 +21,10 @@
     "author": "WebStray"
   },
   {
-    "id": "search-plugin",
-    "title": "Search Plugin",
-    "description": "Powerful search for passwords, 2FA codes and tokens.",
-    "version": "1.0.0",
-    "author": "WebStray"
-  },
-  {
     "id": "security-audit",
     "title": "Security Audit",
     "description": "Security audit for your passwords.",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "author": "WebStray"
   },
   {
