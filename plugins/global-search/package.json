@@ -1,6 +1,6 @@
 {
-  "id": "search-plugin",
-  "title": "Search Plugin",
+  "id": "global-search",
+  "title": "Global Search",
   "description": "Powerful search for passwords, 2FA codes and tokens.",
   "version": "1.1.0",
   "author": "WebStray"
