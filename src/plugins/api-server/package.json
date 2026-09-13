@@ -1,0 +1,7 @@
+{
+  "id": "api-server",
+  "title": "API Server",
+  "description": "API server with Bearer authentication.",
+  "version": "1.0.0",
+  "author": "WebStray"
+}

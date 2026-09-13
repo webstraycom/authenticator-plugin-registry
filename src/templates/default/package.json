@@ -1,0 +1,7 @@
+{
+  "id": "{{ID}}",
+  "title": "{{LABEL}}",
+  "description": "No description provided for this plugin.",
+  "version": "1.0.0",
+  "author": "{{AUTHOR}}"
+}
