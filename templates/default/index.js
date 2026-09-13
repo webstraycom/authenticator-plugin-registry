@@ -11,7 +11,7 @@ function init(sdk) {
         { className: 'text-muted-foreground text-sm' },
         'This is a simple example of a plugin, the code for which is only 40 lines! Start developing your plugin by editing the ',
         React.createElement('strong', null, 'plugins/', '{{ID}}', '/index.js'),
-        'file.',
+        ' file.',
       ),
       React.createElement(
         Button,
